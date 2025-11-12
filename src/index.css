@@ -1,0 +1,253 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-gray-100;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-attachment: fixed;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  * {
+    @apply border-gray-200 dark:border-gray-800;
+  }
+}
+
+@layer components {
+  /* Glassmorphism effect */
+  .glass {
+    @apply backdrop-blur-md bg-white/70 dark:bg-gray-900/70;
+  }
+
+  .glass-card {
+    @apply backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border border-gray-200/50 dark:border-gray-800/50;
+  }
+
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800 rounded;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500;
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+
+  /* Button focus ring */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
+  }
+
+  /* Input styles */
+  .input-base {
+    @apply w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg
+           bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+           placeholder:text-gray-400 dark:placeholder:text-gray-500
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-colors duration-200;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-secondary-600;
+  }
+
+  /* Loading spinner */
+  .spinner {
+    @apply animate-spin rounded-full border-2 border-gray-300 border-t-primary-600;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    @apply h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full bg-gradient-to-r from-primary-600 to-secondary-600 transition-all duration-300 ease-out;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  /* Skeleton loading */
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  .skeleton {
+    @apply bg-gray-200 dark:bg-gray-800 rounded;
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.2) 20%,
+      rgba(255, 255, 255, 0.5) 60%,
+      rgba(255, 255, 255, 0)
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  /* Video player custom controls */
+  .video-controls {
+    @apply absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4;
+  }
+
+  /* Sidebar */
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300
+           hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200;
+  }
+
+  .sidebar-link-active {
+    @apply bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-medium;
+  }
+
+  /* Card */
+  .card {
+    @apply bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300;
+  }
+
+  /* Stats Card */
+  .stats-card {
+    @apply relative overflow-hidden bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800
+           border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-lg hover:shadow-2xl
+           transition-all duration-300 hover:-translate-y-1;
+  }
+
+  .stats-card::before {
+    content: '';
+    @apply absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary-500/10 to-secondary-500/10 rounded-full blur-3xl;
+  }
+
+  /* Course Card */
+  .course-card {
+    @apply group relative overflow-hidden bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800
+           shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2;
+  }
+
+  /* Hero Gradient */
+  .hero-gradient {
+    @apply bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-700 text-white;
+  }
+
+  /* Modal backdrop */
+  .modal-backdrop {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    @apply absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 text-sm
+           bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-lg
+           whitespace-nowrap pointer-events-none opacity-0 transition-opacity duration-200;
+  }
+
+  .tooltip-trigger:hover .tooltip {
+    @apply opacity-100;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Text overflow */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
