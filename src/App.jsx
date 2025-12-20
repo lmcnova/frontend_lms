@@ -2,6 +2,9 @@ import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore, useThemeStore } from './store';
 
+// Security Protection
+import SecurityProvider from './components/security/SecurityProvider';
+
 // Auth Components
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Login from './pages/auth/Login';
@@ -91,24 +94,25 @@ function App() {
   };
 
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route
-        path="/"
-        element={
-          isAuthenticated ? (
-            <Navigate to={getDashboardRoute()} replace />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register/admin" element={<RegisterAdmin />} />
-      <Route path="/register/student" element={<ComingSoon title="Student Registration" />} />
-      <Route path="/debug-auth" element={<DebugAuth />} />
-      <Route path="/verify-certificate" element={<VerifyCertificate />} />
-      <Route path="/verify-certificate/:code" element={<VerifyCertificate />} />
+    <SecurityProvider enableWatermark={false}>
+      <Routes>
+        {/* Public Routes */}
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? (
+              <Navigate to={getDashboardRoute()} replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register/admin" element={<RegisterAdmin />} />
+        <Route path="/register/student" element={<ComingSoon title="Student Registration" />} />
+        <Route path="/debug-auth" element={<DebugAuth />} />
+        <Route path="/verify-certificate" element={<VerifyCertificate />} />
+        <Route path="/verify-certificate/:code" element={<VerifyCertificate />} />
 
       {/* Student Routes */}
       <Route
@@ -300,9 +304,10 @@ function App() {
         }
       />
 
-      {/* 404 */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* 404 */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </SecurityProvider>
   );
 }
 

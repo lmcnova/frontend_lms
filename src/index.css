@@ -2,6 +2,141 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ====== Security Protection Styles ====== */
+
+/* Disable text selection globally */
+.security-no-select {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+/* Disable image dragging */
+.security-no-drag img,
+.security-no-drag video,
+.security-no-drag a {
+  -webkit-user-drag: none !important;
+  -khtml-user-drag: none !important;
+  -moz-user-drag: none !important;
+  -o-user-drag: none !important;
+  user-drag: none !important;
+  pointer-events: auto;
+}
+
+/* Blur content when taking screenshot or recording */
+.security-blur {
+  filter: blur(50px) brightness(0.3) !important;
+  transition: filter 0.1s ease !important;
+  pointer-events: none !important;
+}
+
+.security-blur * {
+  filter: blur(50px) brightness(0.3) !important;
+  visibility: hidden !important;
+}
+
+.security-blur::after {
+  content: "Screen capture is not allowed" !important;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  font-size: 24px !important;
+  color: #fff !important;
+  z-index: 999999 !important;
+  visibility: visible !important;
+  filter: none !important;
+  background: rgba(0, 0, 0, 0.9) !important;
+  padding: 20px 40px !important;
+  border-radius: 10px !important;
+}
+
+/* Watermark overlay for screen recording detection */
+.security-watermark {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 99999;
+  overflow: hidden;
+  opacity: 0.03;
+}
+
+.security-watermark .watermark-text {
+  position: absolute;
+  font-size: 16px;
+  color: #000;
+  white-space: nowrap;
+  transform: rotate(-45deg);
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.security-watermark .watermark-text:nth-child(1) { top: 10%; left: 10%; }
+.security-watermark .watermark-text:nth-child(2) { top: 30%; left: 40%; }
+.security-watermark .watermark-text:nth-child(3) { top: 50%; left: 20%; }
+.security-watermark .watermark-text:nth-child(4) { top: 70%; left: 60%; }
+.security-watermark .watermark-text:nth-child(5) { top: 20%; left: 70%; }
+.security-watermark .watermark-text:nth-child(6) { top: 80%; left: 30%; }
+
+/* Dark mode watermark */
+.dark .security-watermark .watermark-text {
+  color: #fff;
+}
+
+/* Prevent printing sensitive content */
+@media print {
+  body {
+    display: none !important;
+  }
+
+  html::before {
+    content: "Printing is not allowed for this content.";
+    display: block;
+    font-size: 24px;
+    text-align: center;
+    padding: 50px;
+    color: #333;
+  }
+}
+
+/* Disable pointer events on protected content during capture */
+.security-protected {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Hide content in Picture-in-Picture mode */
+:picture-in-picture {
+  filter: blur(50px) !important;
+}
+
+/* Video protection - disable download button */
+video::-webkit-media-controls-enclosure {
+  overflow: hidden;
+}
+
+video::-webkit-media-controls-panel {
+  width: calc(100% + 30px);
+}
+
+video::-internal-media-controls-download-button {
+  display: none !important;
+}
+
+video::-webkit-media-controls-download-button {
+  display: none !important;
+}
+
+/* ====== End Security Protection Styles ====== */
+
 @layer base {
   body {
     @apply bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-gray-100;
