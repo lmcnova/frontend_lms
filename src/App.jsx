@@ -94,32 +94,33 @@ function App() {
   };
 
   return (
-    <SecurityProvider enableWatermark={false}>
-      <Routes>
-        {/* Public Routes */}
-        <Route
-          path="/"
-          element={
-            isAuthenticated ? (
-              <Navigate to={getDashboardRoute()} replace />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register/admin" element={<RegisterAdmin />} />
-        <Route path="/register/student" element={<ComingSoon title="Student Registration" />} />
-        <Route path="/debug-auth" element={<DebugAuth />} />
-        <Route path="/verify-certificate" element={<VerifyCertificate />} />
-        <Route path="/verify-certificate/:code" element={<VerifyCertificate />} />
+    <Routes>
+      {/* Public Routes - NO security protection */}
+      <Route
+        path="/"
+        element={
+          isAuthenticated ? (
+            <Navigate to={getDashboardRoute()} replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register/admin" element={<RegisterAdmin />} />
+      <Route path="/register/student" element={<ComingSoon title="Student Registration" />} />
+      <Route path="/debug-auth" element={<DebugAuth />} />
+      <Route path="/verify-certificate" element={<VerifyCertificate />} />
+      <Route path="/verify-certificate/:code" element={<VerifyCertificate />} />
 
-      {/* Student Routes */}
+      {/* Student Routes - WITH security protection */}
       <Route
         path="/student/dashboard"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <StudentDashboard />
+            <SecurityProvider enableWatermark={false}>
+              <StudentDashboard />
+            </SecurityProvider>
           </ProtectedRoute>
         }
       />
@@ -127,7 +128,9 @@ function App() {
         path="/student/courses"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <StudentMyCourses />
+            <SecurityProvider enableWatermark={false}>
+              <StudentMyCourses />
+            </SecurityProvider>
           </ProtectedRoute>
         }
       />
@@ -135,7 +138,9 @@ function App() {
         path="/student/courses/:courseId"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <StudentCourseView />
+            <SecurityProvider enableWatermark={false}>
+              <StudentCourseView />
+            </SecurityProvider>
           </ProtectedRoute>
         }
       />
@@ -143,7 +148,9 @@ function App() {
         path="/student/courses/:courseId/video/:videoId"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <VideoPlayer />
+            <SecurityProvider enableWatermark={false}>
+              <VideoPlayer />
+            </SecurityProvider>
           </ProtectedRoute>
         }
       />
@@ -151,7 +158,9 @@ function App() {
         path="/student/progress"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <StudentProgress />
+            <SecurityProvider enableWatermark={false}>
+              <StudentProgress />
+            </SecurityProvider>
           </ProtectedRoute>
         }
       />
@@ -159,7 +168,9 @@ function App() {
         path="/student/certificates"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <StudentCertificates />
+            <SecurityProvider enableWatermark={false}>
+              <StudentCertificates />
+            </SecurityProvider>
           </ProtectedRoute>
         }
       />
@@ -167,7 +178,9 @@ function App() {
         path="/student/device-requests"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <StudentDeviceRequests />
+            <SecurityProvider enableWatermark={false}>
+              <StudentDeviceRequests />
+            </SecurityProvider>
           </ProtectedRoute>
         }
       />
@@ -175,7 +188,9 @@ function App() {
         path="/student/settings"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <StudentSettings />
+            <SecurityProvider enableWatermark={false}>
+              <StudentSettings />
+            </SecurityProvider>
           </ProtectedRoute>
         }
       />
@@ -183,7 +198,9 @@ function App() {
         path="/student/*"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <ComingSoon title="Student Portal" />
+            <SecurityProvider enableWatermark={false}>
+              <ComingSoon title="Student Portal" />
+            </SecurityProvider>
           </ProtectedRoute>
         }
       />
@@ -307,7 +324,6 @@ function App() {
         {/* 404 */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </SecurityProvider>
   );
 }
 

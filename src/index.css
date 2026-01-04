@@ -4,6 +4,56 @@
 
 /* ====== Security Protection Styles ====== */
 
+/* CRITICAL: Force remove ALL blur effects in fullscreen mode */
+/* These rules MUST override .security-blur * rules */
+:fullscreen,
+:fullscreen *,
+:fullscreen video,
+:fullscreen img,
+:-webkit-full-screen,
+:-webkit-full-screen *,
+:-webkit-full-screen video,
+:-webkit-full-screen img,
+:-moz-full-screen,
+:-moz-full-screen *,
+:-ms-fullscreen,
+:-ms-fullscreen *,
+.security-blur :fullscreen,
+.security-blur :fullscreen *,
+.security-blur :-webkit-full-screen,
+.security-blur :-webkit-full-screen *,
+body.security-blur :fullscreen,
+body.security-blur :fullscreen *,
+body.security-blur #video-container:fullscreen,
+body.security-blur #video-container:fullscreen * {
+  filter: none !important;
+  -webkit-filter: none !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Target video-container specifically */
+#video-container:fullscreen,
+#video-container:fullscreen *,
+#video-container:fullscreen video,
+#video-container:-webkit-full-screen,
+#video-container:-webkit-full-screen *,
+#video-container:-webkit-full-screen video {
+  filter: none !important;
+  -webkit-filter: none !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* When fullscreen is active, add class to body to disable blur */
+body.fullscreen-active,
+body.fullscreen-active * {
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
 /* Disable text selection globally */
 .security-no-select {
   -webkit-user-select: none !important;

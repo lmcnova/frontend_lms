@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDuration } from '../../utils/formatters';
+import { setFullscreenTransitioning, setFullscreenState } from '../../utils/securityProtection';
 
 export default function VideoPlayer() {
   const { courseId, videoId } = useParams();
@@ -51,6 +52,67 @@ export default function VideoPlayer() {
       }
     };
   }, [courseId, videoId]);
+
+  // Listen for fullscreen changes (ESC key, etc.)
+  useEffect(() => {
+    let blurRemovalInterval = null;
+
+    const removeAllBlur = () => {
+      // Add fullscreen-active class to body (triggers CSS override)
+      document.body.classList.add('fullscreen-active');
+      document.body.classList.remove('security-blur');
+      document.body.classList.remove('capture-active');
+      const videos = document.querySelectorAll('video');
+      videos.forEach(v => {
+        v.style.filter = 'none';
+        v.style.visibility = 'visible';
+        v.style.opacity = '1';
+      });
+      const images = document.querySelectorAll('img');
+      images.forEach(img => {
+        img.style.filter = 'none';
+        img.style.visibility = 'visible';
+      });
+      // Remove warning overlay if exists
+      const warning = document.querySelector('.capture-warning-overlay');
+      if (warning) warning.remove();
+    };
+
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!document.fullscreenElement;
+      setFullscreen(isCurrentlyFullscreen);
+      setFullscreenState(isCurrentlyFullscreen);
+
+      if (isCurrentlyFullscreen) {
+        // Immediately remove blur
+        removeAllBlur();
+        // Keep removing blur every 50ms while in fullscreen
+        blurRemovalInterval = setInterval(removeAllBlur, 50);
+      } else {
+        // Exiting fullscreen - stop the interval and remove class
+        if (blurRemovalInterval) {
+          clearInterval(blurRemovalInterval);
+          blurRemovalInterval = null;
+        }
+        document.body.classList.remove('fullscreen-active');
+        setTimeout(() => {
+          setFullscreenTransitioning(false);
+        }, 500);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      if (blurRemovalInterval) {
+        clearInterval(blurRemovalInterval);
+      }
+      // Reset fullscreen state on unmount
+      document.body.classList.remove('fullscreen-active');
+      setFullscreenState(false);
+      setFullscreenTransitioning(false);
+    };
+  }, []);
 
   const loadData = async () => {
     try {
@@ -154,6 +216,7 @@ export default function VideoPlayer() {
   const toggleFullscreen = () => {
     const container = document.getElementById('video-container');
     if (!fullscreen) {
+      // Flags already set in onMouseDown, just request fullscreen
       if (container.requestFullscreen) {
         container.requestFullscreen();
       }
@@ -163,6 +226,12 @@ export default function VideoPlayer() {
         document.exitFullscreen();
       }
       setFullscreen(false);
+
+      // Reset fullscreen state after exiting
+      setTimeout(() => {
+        setFullscreenTransitioning(false);
+        setFullscreenState(false);
+      }, 500);
     }
   };
 
@@ -342,7 +411,17 @@ export default function VideoPlayer() {
                       </div>
 
                       {/* Fullscreen */}
-                      <button onClick={toggleFullscreen} className="hover:scale-110 transition-transform">
+                      <button
+                        onMouseDown={() => {
+                          // Set flags BEFORE click to prevent blur
+                          if (!fullscreen) {
+                            setFullscreenTransitioning(true);
+                            setFullscreenState(true);
+                          }
+                        }}
+                        onClick={toggleFullscreen}
+                        className="hover:scale-110 transition-transform"
+                      >
                         {fullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
                       </button>
                     </div>

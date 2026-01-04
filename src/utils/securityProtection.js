@@ -83,6 +83,11 @@ const hideCaptureWarning = () => {
  * Trigger protection when capture is detected
  */
 const triggerCaptureProtection = () => {
+  // NEVER trigger blur during fullscreen mode or transition
+  if (isFullscreen || fullscreenTransitioning) {
+    return;
+  }
+
   document.body.classList.add('security-blur');
   document.body.classList.add('capture-active');
   showCaptureWarning();
@@ -122,6 +127,11 @@ const releaseCaptureProtection = () => {
  * Instant blur for screenshot protection - blur BEFORE capture happens
  */
 const instantBlurForScreenshot = () => {
+  // NEVER trigger blur during fullscreen mode or transition
+  if (isFullscreen || fullscreenTransitioning) {
+    return;
+  }
+
   // Immediately hide all video/image content
   document.body.classList.add('security-blur');
   document.body.classList.add('capture-active');
@@ -323,6 +333,14 @@ const blockCut = (e) => {
  */
 let visibilityCallback = null;
 const handleVisibilityChange = () => {
+  // Skip if in fullscreen mode
+  if (isFullscreen || fullscreenTransitioning) {
+    if (visibilityCallback) {
+      visibilityCallback(document.hidden);
+    }
+    return;
+  }
+
   if (document.hidden) {
     // Page is hidden - possible screenshot or screen recording
     document.body.classList.add('security-blur');
@@ -389,14 +407,48 @@ const handleFullscreenChange = () => {
   isFullscreen = checkFullscreen();
   fullscreenTransitioning = true;
 
+  if (isFullscreen) {
+    // Immediately remove all blur when entering fullscreen
+    forceRemoveAllBlur();
+  }
+
   // Allow time for fullscreen transition to complete
   setTimeout(() => {
     fullscreenTransitioning = false;
-    // If in fullscreen and was blurred, release protection
+    // If in fullscreen, keep removing blur
     if (isFullscreen) {
-      releaseCaptureProtection();
+      forceRemoveAllBlur();
     }
   }, 500);
+};
+
+/**
+ * Force remove all blur effects - used during fullscreen
+ */
+const forceRemoveAllBlur = () => {
+  // Remove blur classes from body
+  document.body.classList.remove('security-blur');
+  document.body.classList.remove('capture-active');
+
+  // Remove inline blur styles from all videos
+  const videos = document.querySelectorAll('video');
+  videos.forEach(video => {
+    video.style.filter = '';
+    video.style.transition = '';
+  });
+
+  // Remove inline blur styles from all images
+  const images = document.querySelectorAll('img');
+  images.forEach(img => {
+    img.style.filter = '';
+    img.style.transition = '';
+  });
+
+  // Hide capture warning if exists
+  if (captureWarningElement) {
+    captureWarningElement.remove();
+    captureWarningElement = null;
+  }
 };
 
 const startAdvancedCaptureDetection = () => {
@@ -516,6 +568,11 @@ const startAdvancedCaptureDetection = () => {
  * Prevent PrintScreen by clearing clipboard
  */
 const handleKeyUp = (e) => {
+  // Skip if in fullscreen mode
+  if (isFullscreen || fullscreenTransitioning) {
+    return;
+  }
+
   if (e.key === 'PrintScreen' || e.keyCode === 44) {
     navigator.clipboard.writeText('').catch(() => {});
     document.body.classList.add('security-blur');
@@ -595,6 +652,29 @@ export const removeWatermark = () => {
   const watermark = document.getElementById('security-watermark');
   if (watermark) {
     watermark.remove();
+  }
+};
+
+/**
+ * Set fullscreen transitioning state - call this BEFORE requesting fullscreen
+ * This prevents blur from triggering during fullscreen transition
+ */
+export const setFullscreenTransitioning = (transitioning) => {
+  fullscreenTransitioning = transitioning;
+  if (transitioning) {
+    // Immediately remove ALL blur effects
+    forceRemoveAllBlur();
+  }
+};
+
+/**
+ * Set fullscreen state manually
+ */
+export const setFullscreenState = (state) => {
+  isFullscreen = state;
+  if (state) {
+    // Immediately remove ALL blur effects
+    forceRemoveAllBlur();
   }
 };
 
@@ -744,4 +824,6 @@ export default {
   useSecurityProtection,
   addWatermark,
   removeWatermark,
+  setFullscreenTransitioning,
+  setFullscreenState,
 };
