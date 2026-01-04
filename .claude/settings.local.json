@@ -5,7 +5,13 @@
       "Bash(npm init:*)",
       "Bash(npm install:*)",
       "Bash(npm run dev:*)",
-      "Bash(\"C:\\Backup Project\\Frontend_new\\src\\pages\\public\\VerifyCertificate.jsx\")"
+      "Bash(\"C:\\Backup Project\\Frontend_new\\src\\pages\\public\\VerifyCertificate.jsx\")",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd security protection against inspect, screenshot, screen recording and download\n\n- Add SecurityProvider component to wrap entire app\n- Block DevTools shortcuts \\(F12, Ctrl+Shift+I, Ctrl+U, etc.\\)\n- Block right-click context menu\n- Block copy/cut/drag operations\n- Detect window blur for Snipping Tool protection\n- Blur content when window loses focus\n- Block PrintScreen and clear clipboard\n- Block screen capture API\n- Add CSS security styles with blur effect\n- Show warning message when capture attempted\n- Disable printing\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push)",
+      "Bash(npm run build:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

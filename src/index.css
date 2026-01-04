@@ -118,6 +118,64 @@
   filter: blur(50px) !important;
 }
 
+/* CRITICAL: Blur content when screen capture/recording is active */
+/* This media query detects when the screen is being captured/recorded */
+@media (display-mode: picture-in-picture),
+       (display-mode: fullscreen) {
+  .security-protected video,
+  .security-protected img {
+    filter: blur(30px) !important;
+  }
+}
+
+/* Screen capture detection via CSS */
+@media screen and (-webkit-device-pixel-ratio: 0) {
+  /* Safari specific capture detection */
+}
+
+/* Additional protection: Always show warning overlay during capture */
+.capture-warning-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.95) !important;
+  z-index: 999999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: white !important;
+  font-size: 24px !important;
+  text-align: center !important;
+  padding: 20px !important;
+}
+
+.capture-warning-overlay span {
+  background: #dc2626 !important;
+  padding: 20px 40px !important;
+  border-radius: 10px !important;
+  font-weight: bold !important;
+}
+
+/* Force blur on video elements when capture detected */
+.capture-active video,
+.capture-active iframe,
+.capture-active .video-container {
+  filter: blur(100px) brightness(0.1) !important;
+  transition: none !important;
+}
+
+.capture-active img {
+  filter: blur(50px) brightness(0.2) !important;
+}
+
+/* Hide all content during capture */
+.capture-active .content-protected {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
 /* Video protection - disable download button */
 video::-webkit-media-controls-enclosure {
   overflow: hidden;

@@ -14,6 +14,10 @@ const originalConsole = {
 let devToolsOpen = false;
 let devToolsCheckInterval = null;
 
+// Fullscreen state - to prevent blur during fullscreen mode
+let isFullscreen = false;
+let fullscreenTransitioning = false;
+
 /**
  * Detect if DevTools is open using various methods
  */
@@ -53,9 +57,105 @@ const handleDevToolsDetection = (callback) => {
 };
 
 /**
+ * Show capture warning overlay
+ */
+let captureWarningElement = null;
+const showCaptureWarning = () => {
+  if (captureWarningElement) return;
+
+  captureWarningElement = document.createElement('div');
+  captureWarningElement.className = 'capture-warning-overlay';
+  captureWarningElement.innerHTML = '<span>Screen capture is not allowed. Please return to the application.</span>';
+  document.body.appendChild(captureWarningElement);
+};
+
+/**
+ * Hide capture warning overlay
+ */
+const hideCaptureWarning = () => {
+  if (captureWarningElement) {
+    captureWarningElement.remove();
+    captureWarningElement = null;
+  }
+};
+
+/**
+ * Trigger protection when capture is detected
+ */
+const triggerCaptureProtection = () => {
+  document.body.classList.add('security-blur');
+  document.body.classList.add('capture-active');
+  showCaptureWarning();
+
+  // Also blur all video elements immediately
+  const videos = document.querySelectorAll('video');
+  videos.forEach(video => {
+    video.style.filter = 'blur(100px) brightness(0.1)';
+    video.style.transition = 'none';
+  });
+};
+
+/**
+ * Release protection when capture stops
+ */
+const releaseCaptureProtection = () => {
+  document.body.classList.remove('security-blur');
+  document.body.classList.remove('capture-active');
+  hideCaptureWarning();
+
+  // Restore video elements
+  const videos = document.querySelectorAll('video');
+  videos.forEach(video => {
+    video.style.filter = '';
+    video.style.transition = '';
+  });
+
+  // Restore image elements
+  const images = document.querySelectorAll('img');
+  images.forEach(img => {
+    img.style.filter = '';
+    img.style.transition = '';
+  });
+};
+
+/**
+ * Instant blur for screenshot protection - blur BEFORE capture happens
+ */
+const instantBlurForScreenshot = () => {
+  // Immediately hide all video/image content
+  document.body.classList.add('security-blur');
+  document.body.classList.add('capture-active');
+
+  const videos = document.querySelectorAll('video');
+  videos.forEach(video => {
+    video.style.filter = 'blur(100px) brightness(0.1)';
+    video.style.transition = 'none';
+  });
+
+  const images = document.querySelectorAll('img');
+  images.forEach(img => {
+    img.style.filter = 'blur(50px) brightness(0.2)';
+    img.style.transition = 'none';
+  });
+
+  showCaptureWarning();
+};
+
+/**
  * Block keyboard shortcuts for DevTools and source view
  */
 const blockKeyboardShortcuts = (e) => {
+  // CRITICAL: Detect Windows key press - blur IMMEDIATELY before Snipping Tool opens
+  // Windows key is 'Meta' on Windows
+  if (e.key === 'Meta' || e.key === 'OS' || e.keyCode === 91 || e.keyCode === 92) {
+    instantBlurForScreenshot();
+  }
+
+  // Also blur on Shift key if Meta/Windows is held (Win+Shift+S preparation)
+  if (e.shiftKey && (e.metaKey || e.key === 'Shift')) {
+    instantBlurForScreenshot();
+  }
+
   // F12 - DevTools
   if (e.key === 'F12' || e.keyCode === 123) {
     e.preventDefault();
@@ -119,23 +219,60 @@ const blockKeyboardShortcuts = (e) => {
     return false;
   }
 
-  // PrintScreen - Screenshot
+  // PrintScreen - Screenshot - BLUR FIRST then block
   if (e.key === 'PrintScreen' || e.keyCode === 44) {
+    instantBlurForScreenshot();
     e.preventDefault();
     e.stopPropagation();
-    // Clear clipboard
-    navigator.clipboard.writeText('').catch(() => {});
+    // Clear clipboard after a short delay
+    setTimeout(() => {
+      navigator.clipboard.writeText('Screenshot blocked').catch(() => {});
+    }, 100);
     return false;
   }
 
-  // Windows + Shift + S - Snipping tool
+  // Windows + Shift + S - Snipping tool - Already blurred by Meta key detection above
   if (e.metaKey && e.shiftKey && (e.key === 'S' || e.key === 's' || e.keyCode === 83)) {
+    instantBlurForScreenshot();
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }
+
+  // Alt + PrintScreen - Window screenshot
+  if (e.altKey && (e.key === 'PrintScreen' || e.keyCode === 44)) {
+    instantBlurForScreenshot();
     e.preventDefault();
     e.stopPropagation();
     return false;
   }
 
   return true;
+};
+
+/**
+ * Handle key up to restore content after screenshot attempt
+ */
+const handleKeyUpRestore = (e) => {
+  // Restore content when Windows/Meta key is released
+  if (e.key === 'Meta' || e.key === 'OS' || e.keyCode === 91 || e.keyCode === 92) {
+    setTimeout(() => {
+      if (document.hasFocus()) {
+        releaseCaptureProtection();
+      }
+    }, 1000);
+  }
+
+  // Also handle PrintScreen key up
+  if (e.key === 'PrintScreen' || e.keyCode === 44) {
+    // Keep blurred for a bit longer, then clear clipboard
+    setTimeout(() => {
+      navigator.clipboard.writeText('Screenshot blocked').catch(() => {});
+      if (document.hasFocus()) {
+        releaseCaptureProtection();
+      }
+    }, 1500);
+  }
 };
 
 /**
@@ -205,7 +342,12 @@ const handleVisibilityChange = () => {
  * Handle window blur (Snipping Tool, screen recording, alt+tab detection)
  */
 const handleWindowBlur = () => {
+  // Skip if in fullscreen mode - don't blur during fullscreen
+  if (isFullscreen || fullscreenTransitioning) return;
+
   document.body.classList.add('security-blur');
+  document.body.classList.add('capture-active');
+  showCaptureWarning();
 };
 
 /**
@@ -214,7 +356,160 @@ const handleWindowBlur = () => {
 const handleWindowFocus = () => {
   setTimeout(() => {
     document.body.classList.remove('security-blur');
-  }, 300);
+    document.body.classList.remove('capture-active');
+    hideCaptureWarning();
+  }, 500);
+};
+
+/**
+ * Advanced screen capture detection using multiple methods
+ */
+let captureDetectionInterval = null;
+let captureAnimationFrame = null;
+let lastPixelRatio = window.devicePixelRatio;
+let isCapturing = false;
+let lastFocusState = true;
+
+/**
+ * Check if document is in fullscreen mode
+ */
+const checkFullscreen = () => {
+  return !!(
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  );
+};
+
+/**
+ * Handle fullscreen change - don't trigger protection during fullscreen
+ */
+const handleFullscreenChange = () => {
+  isFullscreen = checkFullscreen();
+  fullscreenTransitioning = true;
+
+  // Allow time for fullscreen transition to complete
+  setTimeout(() => {
+    fullscreenTransitioning = false;
+    // If in fullscreen and was blurred, release protection
+    if (isFullscreen) {
+      releaseCaptureProtection();
+    }
+  }, 500);
+};
+
+const startAdvancedCaptureDetection = () => {
+  // Listen for fullscreen changes
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+  document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+  document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+  // Method 1: Monitor for device pixel ratio changes (screenshot tools can affect this)
+  const checkPixelRatio = () => {
+    // Skip if in fullscreen or transitioning
+    if (isFullscreen || fullscreenTransitioning) return;
+
+    if (window.devicePixelRatio !== lastPixelRatio) {
+      triggerCaptureProtection();
+      lastPixelRatio = window.devicePixelRatio;
+    }
+  };
+
+  // Method 2: Ultra-fast focus detection using requestAnimationFrame
+  const checkWindowState = () => {
+    // Skip if in fullscreen or transitioning
+    if (isFullscreen || fullscreenTransitioning) {
+      captureAnimationFrame = requestAnimationFrame(checkWindowState);
+      return;
+    }
+
+    const hasFocus = document.hasFocus();
+
+    // Detect focus change immediately
+    if (hasFocus !== lastFocusState) {
+      lastFocusState = hasFocus;
+
+      if (!hasFocus) {
+        // Lost focus - immediately protect content
+        isCapturing = true;
+        triggerCaptureProtection();
+      } else {
+        // Regained focus - delay before removing protection
+        setTimeout(() => {
+          if (document.hasFocus()) {
+            isCapturing = false;
+            releaseCaptureProtection();
+          }
+        }, 800);
+      }
+    }
+
+    // Continue monitoring every frame
+    captureAnimationFrame = requestAnimationFrame(checkWindowState);
+  };
+
+  // Method 3: Check for screen recording API usage
+  const monitorMediaDevices = () => {
+    if (navigator.mediaDevices) {
+      const originalEnumerateDevices = navigator.mediaDevices.enumerateDevices;
+      navigator.mediaDevices.enumerateDevices = async function() {
+        const devices = await originalEnumerateDevices.call(navigator.mediaDevices);
+        // Check if any screen capture device is active
+        const hasScreenCapture = devices.some(device =>
+          device.kind === 'videoinput' && device.label.toLowerCase().includes('screen')
+        );
+        if (hasScreenCapture && !isFullscreen) {
+          triggerCaptureProtection();
+        }
+        return devices;
+      };
+    }
+  };
+
+  // Method 4: Monitor mouse leaving the window (indicates possible capture tool selection)
+  const handleMouseLeave = () => {
+    // Skip if in fullscreen or transitioning
+    if (isFullscreen || fullscreenTransitioning) return;
+    triggerCaptureProtection();
+  };
+
+  const handleMouseEnter = () => {
+    if (document.hasFocus()) {
+      setTimeout(() => {
+        if (document.hasFocus()) {
+          releaseCaptureProtection();
+        }
+      }, 300);
+    }
+  };
+
+  document.addEventListener('mouseleave', handleMouseLeave);
+  document.addEventListener('mouseenter', handleMouseEnter);
+
+  // Start ultra-fast monitoring with requestAnimationFrame
+  captureAnimationFrame = requestAnimationFrame(checkWindowState);
+
+  // Also use interval as backup
+  captureDetectionInterval = setInterval(() => {
+    checkPixelRatio();
+  }, 50);
+
+  monitorMediaDevices();
+
+  // Also listen for resize events (snipping tool can cause resize)
+  window.addEventListener('resize', () => {
+    // Skip if in fullscreen or transitioning - resize happens during fullscreen
+    if (isFullscreen || fullscreenTransitioning) return;
+
+    triggerCaptureProtection();
+    setTimeout(() => {
+      if (document.hasFocus()) {
+        releaseCaptureProtection();
+      }
+    }, 500);
+  });
 };
 
 /**
@@ -326,6 +621,7 @@ export const initSecurityProtection = (options = {}) => {
   // Block keyboard shortcuts
   if (disableKeyboardShortcuts) {
     document.addEventListener('keydown', blockKeyboardShortcuts, { capture: true });
+    document.addEventListener('keyup', handleKeyUpRestore, { capture: true });
   }
 
   // Block right-click
@@ -373,6 +669,7 @@ export const initSecurityProtection = (options = {}) => {
   // Screen capture protection
   if (enableScreenCaptureProtection) {
     detectScreenCapture();
+    startAdvancedCaptureDetection();
   }
 
   // Disable console in production
@@ -389,6 +686,7 @@ export const initSecurityProtection = (options = {}) => {
   return () => {
     if (disableKeyboardShortcuts) {
       document.removeEventListener('keydown', blockKeyboardShortcuts, { capture: true });
+      document.removeEventListener('keyup', handleKeyUpRestore, { capture: true });
     }
     if (disableRightClick) {
       document.removeEventListener('contextmenu', blockContextMenu, { capture: true });
@@ -412,6 +710,17 @@ export const initSecurityProtection = (options = {}) => {
       window.removeEventListener('blur', handleWindowBlur);
       window.removeEventListener('focus', handleWindowFocus);
       document.removeEventListener('keyup', handleKeyUp, { capture: true });
+    }
+    if (enableScreenCaptureProtection) {
+      if (captureDetectionInterval) {
+        clearInterval(captureDetectionInterval);
+        captureDetectionInterval = null;
+      }
+      if (captureAnimationFrame) {
+        cancelAnimationFrame(captureAnimationFrame);
+        captureAnimationFrame = null;
+      }
+      hideCaptureWarning();
     }
     if (enableWatermark) {
       removeWatermark();
